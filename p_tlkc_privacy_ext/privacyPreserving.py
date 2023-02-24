@@ -1,11 +1,14 @@
 from datetime import datetime
 from pm4py.objects.log.importer.xes import factory as xes_importer_factory
 from pm4py.objects.log.exporter.xes import factory as xes_exporter
+import pandas as pd
+from pm4py.objects.conversion.log import factory as conversion_factory
 from p_privacy_metadata.privacyExtension import privacyExtension
 from p_tlkc_privacy_ext import Anonymizer
+from p_tlkc_privacy_ext import FileConverter
 import os
 
-
+# this class only calls the anonymizer depending on the input data and especially separates by bk_type (relative, set, multiset and sequence)
 class privacyPreserving(object):
     '''
     Applying privacy preserving technique
@@ -19,13 +22,18 @@ class privacyPreserving(object):
 
     def apply(self, T, L, K, C, sensitive_att, cont, bk_type, trace_attributes, life_cycle, all_life_cycle, alpha, beta, directory, file_name, external_name, utility_measure=[0.5,0.5], multiprocess=True, mp_technique='pool'):
 
+        # bk_type is set, multiset, sequence or relative
+        # why is t only in the mix for relative?
+        # this is a nested dictionary
+        # what are w, x and v?
         if bk_type == 'relative':
             dict1 = {
                 l: {k: {c: {t: {"w": [], "x": [], "v": []} for t in T} for c in C} for k in K}
                 for l in range(0, L[len(L) - 1] + 1)}
         else:
-            dict1 = {l: {k: {c: {"w": [], "x": [], "v": []} for c in C} for k in K}
-                     for l in range(0, L[len(L) - 1] + 1)}
+            dict1 = {
+                l: {k: {c: {"w": [], "x": [], "v": []} for c in C} for k in K}
+                for l in range(0, L[len(L) - 1] + 1)}
 
         anonymizer = Anonymizer.Anonymizer()
         privacy_aware_log_dir = ""
@@ -35,6 +43,7 @@ class privacyPreserving(object):
             for k in K:
                 for c in C:
                     try:
+                        # functionality for bk_types that are not relative
                         if bk_type == "set" or bk_type == "multiset" or bk_type == "sequence":
                             print("l = " + str(l) + " type = " + str(bk_type) + " is running...")
                             log2 = {t: None for t in T}
@@ -47,6 +56,7 @@ class privacyPreserving(object):
                             dict1 = dict2
                             for t in T:
                                 self.add_privacy_metadata(log[t])
+                                # this if-else generates the name of the privacy-preserved event log
                                 if external_name:
                                     privacy_aware_log_dir = os.path.join(directory, file_name)
                                 else:
@@ -54,7 +64,14 @@ class privacyPreserving(object):
                                         c) + "_" + bk_type + ".xes"
                                     privacy_aware_log_dir = os.path.join(directory, n_file_path)
                                 xes_exporter.export_log(log[t], privacy_aware_log_dir)
+
+                                n_file_path_csv = file_name + "_" + str(t) + "_" + str(l) + "_" + str(k) + "_" + str(c) + "_" + bk_type + ".csv"
+
+                                fileConverter = FileConverter.FileConverter()
+                                fileConverter.convert_to_csv(log[t], n_file_path_csv, directory)
+
                                 print(n_file_path + " has been exported!")
+                        # functionality for bk_type relative
                         elif bk_type == "relative":
                             print("l = " + str(l) + " type = " + str(bk_type) + " is running...")
                             for t in T:
