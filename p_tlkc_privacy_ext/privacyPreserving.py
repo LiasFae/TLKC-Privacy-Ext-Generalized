@@ -20,7 +20,7 @@ class privacyPreserving(object):
         '''
         self.log = xes_importer_factory.apply(log)
 
-    def apply(self, T, L, K, C, sensitive_att, cont, bk_type, trace_attributes, life_cycle, all_life_cycle, alpha, beta, directory, file_name, external_name, utility_measure=[0.5,0.5], multiprocess=True, mp_technique='pool'):
+    def apply(self, T, L, K, C, sensitive_att, cont, generalising, bk_type, trace_attributes, life_cycle, all_life_cycle, alpha, beta, directory, file_name, external_name, utility_measure=[0.5,0.5], multiprocess=True, mp_technique='pool'):
 
         # bk_type is set, multiset, sequence or relative
         # why is t only in the mix for relative?
@@ -51,21 +51,26 @@ class privacyPreserving(object):
                                 log2[t] = self.log
                             log, violating_length, d, d_l, dict2, max_removed = \
                                 anonymizer.none_relative_type(self.log, log2, sensitive_att, cont, l, k, c, dict1, T,
-                                                              trace_attributes, life_cycle, all_life_cycle, bk_type,
+                                                              trace_attributes, life_cycle, all_life_cycle, generalising, bk_type,
                                                               alpha, beta, utility_measure, multiprocess, mp_technique)
                             dict1 = dict2
                             for t in T:
                                 self.add_privacy_metadata(log[t])
+                                if generalising:
+                                    method = "generalized"
+                                else:
+                                    method = "suppressed"
                                 # this if-else generates the name of the privacy-preserved event log
                                 if external_name:
                                     privacy_aware_log_dir = os.path.join(directory, file_name)
                                 else:
                                     n_file_path = file_name + "_" + str(t) + "_" + str(l) + "_" + str(k) + "_" + str(
-                                        c) + "_" + bk_type + ".xes"
+                                        c) + "_" + bk_type + "_" + method + ".xes"
                                     privacy_aware_log_dir = os.path.join(directory, n_file_path)
                                 xes_exporter.export_log(log[t], privacy_aware_log_dir)
 
-                                n_file_path_csv = file_name + "_" + str(t) + "_" + str(l) + "_" + str(k) + "_" + str(c) + "_" + bk_type + ".csv"
+
+                                n_file_path_csv = file_name + "_" + str(t) + "_" + str(l) + "_" + str(k) + "_" + str(c) + "_" + bk_type + "_" + method + ".csv"
 
                                 fileConverter = FileConverter.FileConverter()
                                 fileConverter.convert_to_csv(log[t], n_file_path_csv, directory)
@@ -87,6 +92,12 @@ class privacyPreserving(object):
                                     c) + "_" + bk_type + ".xes"
                                     privacy_aware_log_dir = os.path.join(directory, n_file_path)
                                 xes_exporter.export_log(log_time, privacy_aware_log_dir)
+
+                                n_file_path_csv = file_name + "_" + str(t) + "_" + str(l) + "_" + str(k) + "_" + str(c) + "_" + bk_type + ".csv"
+
+                                fileConverter = FileConverter.FileConverter()
+                                fileConverter.convert_to_csv(log_time, n_file_path_csv, directory)
+
                                 print(n_file_path + " has been exported!")
                                 dict1 = dict2
                     except Exception as e:

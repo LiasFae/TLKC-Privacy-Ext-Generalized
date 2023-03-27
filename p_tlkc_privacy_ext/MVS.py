@@ -161,7 +161,6 @@ class MVS():
             self.dict_safe[i - 1][K][C][t]["v"] = violating.copy()
 
         violatingConj = [item for sublist in violating for item in sublist]
-
         return violatingConj, self.dict_safe
 
     def chunk(self, data, parts):

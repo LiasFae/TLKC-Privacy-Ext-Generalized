@@ -1,7 +1,4 @@
-import os
-import sys
-
-from p_tlkc_privacy_ext import MFS, ELReps, MVS
+from p_tlkc_privacy_ext import ELReps, MVS, Generalizer
 
 
 class Anonymizer:
@@ -10,29 +7,23 @@ class Anonymizer:
         self = self
 
     def none_relative_type(self, log, log2, sensitive_att, cont, l, k, c, dict1, spectime, trace_attributes, life_cycle,
-                           all_life_cycle, bk_type, alpha, beta, utility_measure, multiprocess, mp_technique):
+                           all_life_cycle, generalising, bk_type, alpha, beta, utility_measure, multiprocess, mp_technique):
         repres = ELReps.ELReps(log)
-        # log is simplified with the sensitive attribute
         logsimple, traces, sensitives = repres.create_simple_log(bk_type, trace_attributes, life_cycle,
                                                                  all_life_cycle, sensitive_att,
                                                                  time_accuracy='seconds')
-
         relative_freq = repres.get_relative_freq(traces,utility_measure)
-        # analyze what this does
         mvs = MVS.MVS(traces, logsimple, sensitive_att, cont, sensitives, bk_type, dict_safe=dict1)
         violating, dict1 = mvs.mvs(l, k, c, multiprocess, mp_technique)
         violating_length = len(violating.copy())
-        # from docu:
-        # select event node e that has the highest score to suppress based on some score function
-        # delete all MVTs and MFTs containing the event e
-        # update the score function for all remaining events in MVT
-        # add e to suppression set
-        # suppress all e from the event log
-        # what is suppression?
-        # ---- here something needs to happen before traces get removed (before or after suppression set) ---- 
-        # or with violating?
         suppression_set = repres.suppression_new(violating, relative_freq, alpha, beta)
-        traces_removed, max_removed = repres.suppress_traces(logsimple.copy(), suppression_set)
+        if generalising:
+            # Generalizer
+            generalize = Generalizer.Generalizer(log)
+            traces_removed, max_removed = generalize.generalize_traces(logsimple.copy(), suppression_set)
+        else:
+            # Suppressor
+            traces_removed, max_removed = repres.suppress_traces(logsimple.copy(), suppression_set)
         log_count = {t: None for t in spectime}
         d_count = {t: None for t in spectime}
         d_l_count = {t: None for t in spectime}
@@ -63,7 +54,6 @@ class Anonymizer:
         #             "If you are using multiprocessing, the main function needs to be indicated! Use (if __name__ == '__main__':)")
 
         violating_length_time = len(violating_time.copy())
-        # ---- here something needs to happen before traces get removed ---- 
         suppression_set = repres.suppression_new(violating_time, relative_freq, alpha, beta)
         traces_removed, max_removed = repres.suppress_traces(logsimple, suppression_set)
         log_time, d_time, d_l_time = repres.createEventLog(traces_removed, t, trace_attributes, life_cycle, all_life_cycle,

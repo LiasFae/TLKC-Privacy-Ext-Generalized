@@ -1,11 +1,13 @@
 import operator
 import datetime
+import csv
 from pm4py.objects.log.log import Trace, EventLog
 from pm4py.objects.log.util import sorting
 from collections import Counter
 from multiset import Multiset
 from dateutil.relativedelta import relativedelta
 from calendar import monthrange
+from p_tlkc_privacy_ext import FileConverter
 import copy
 
 class ELReps():
@@ -29,7 +31,6 @@ class ELReps():
             for key in sens.keys():
                 # sample all values for a specific sensitive attribute (key) in dict
                 sensitives[key].append(sens[key])
-
         return logsimple, traces, sensitives
 
     def get_multiset_log(self,alist):
@@ -799,5 +800,4 @@ class ELReps():
         final_freq = {}
         for event,freq in freq_in_log.items():
             final_freq[event] = (utility_measure[0] * freq_in_log[event]) + (utility_measure[1] * freq_in_variant[event])
-
         return final_freq
