@@ -16,7 +16,6 @@ class Generalizer():
             count_removed = 0
             list_trace = logsimple[key]['trace']
             generalized_traces = generalize(list_trace, config, suppression_set)
-            #print(generalized_traces)
             # for i, (event, count) in enumerate(list_trace):
             #     if (event, count) in suppression_set:
             #         event_path = event.split(":")
@@ -31,28 +30,37 @@ class Generalizer():
         return logsimple, max_removed
 
 def generalize_event(event, config):
-    event_path = event[0].split(":")
-    sub_config = config[event_path[0]]
-    for path in event_path[1:]:
-        sub_config = sub_config[path]
-    event_type = list(sub_config.keys())[0]
+    event_type = None
+    if ":" in event[0]:
+        event_path = event[0].split(":")
+        try:
+            sub_config = config[event_path[0]]
+        except KeyError:
+            raise ValueError(f"Key {event_path[0]} not found in config.")
+        for path in event_path[1:]:
+            try:
+                sub_config = sub_config[path]
+            except KeyError:
+                raise ValueError(f"Key {path} not found in config.")
+        event_type = list(sub_config.keys())[0]
+    else:
+        event_type = list(config.keys())[0]
     return (event_type, event[1])
 
 
 def update_trace(trace, old_event, new_event):
     updated_trace = []
-    for event in trace:
-        if event == old_event:
-            updated_trace.append(new_event)
-        else:
-            updated_trace.append(event)
+    if trace == old_event:
+        updated_trace.append(new_event)
+    else:
+        updated_trace.append(trace)
     return updated_trace
 
 
-def generalize(list_trace, violating_list, config):
+def generalize(list_trace, config, violating_list):
     for i, trace in enumerate(list_trace):
         for violating_event in violating_list:
-            if violating_event in trace:
+            if violating_event == trace:
                 generalized_event = generalize_event(violating_event, config)
                 updated_trace = update_trace(trace, violating_event, generalized_event)
                 list_trace[i] = updated_trace
