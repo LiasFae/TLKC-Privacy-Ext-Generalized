@@ -22,8 +22,8 @@ if __name__ == '__main__':
     utility_measure = [event_in_log,event_in_variant]
     sensitive_att = ['Diagnose']  # categorical sensitive attributes
     T = ["minutes"]  # original, seconds, minutes, hours, days
-    generalising = False # True to use a generalization approach, False for suppression
-    method = "suppressed" # generalized or suppressed
+    generalising = True # True to use a generalization approach, False for suppression
+    method = "generalized" # generalized or suppressed
     cont = []  # numerical sensitive attributes
     bk_type = "set"  # set, multiset, sequence, relative
     event_attributes = ['concept:name']  # to simplify the event log

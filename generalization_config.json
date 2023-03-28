@@ -1,0 +1,30 @@
+{
+	"org:group": {
+		"ER": {
+			"Return ER": {},
+			"ER Registration": {},
+			"ER Sepsis Triage": {},
+			"ER Triage": {}			
+		},
+		"IV": {
+			"IV Liquid": {},
+			"IV Antibiotics": {}		
+		},
+		"Admission": {
+			"Admission NC": {},
+			"Admission IC": {}			
+		},
+		"MedicalValues": {
+			"Leucocytes": {},
+			"CRP": {},
+			"LacticAcid": {}
+		},
+		"Release": {
+			"Release A": {},
+			"Release B": {},
+			"Release C": {},
+			"Release D": {},
+			"Release E": {}
+		}
+	}
+}
