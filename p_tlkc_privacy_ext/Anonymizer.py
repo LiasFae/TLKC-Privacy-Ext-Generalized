@@ -30,7 +30,7 @@ class Anonymizer:
         for t in spectime:
             traces_removed_copy = traces_removed.copy()
             repres = ELReps.ELReps(log2[t])
-            log_count[t], d_count[t], d_l_count[t] = repres.createEventLog(traces_removed_copy, t, trace_attributes,
+            log_count[t], d_count[t], d_l_count[t] = repres.createEventLog(traces_removed_copy, generalising, t, trace_attributes,
                                                                            life_cycle,
                                                                            all_life_cycle, bk_type, sensitive_att,
                                                                            time_accuracy='seconds')

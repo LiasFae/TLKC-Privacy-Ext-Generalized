@@ -7,7 +7,7 @@ from collections import Counter
 from multiset import Multiset
 from dateutil.relativedelta import relativedelta
 from calendar import monthrange
-from p_tlkc_privacy_ext import FileConverter
+from p_tlkc_privacy_ext import FileConverter, Generalizer
 import copy
 
 class ELReps():
@@ -364,7 +364,7 @@ class ELReps():
 
         return trace, sens
 
-    def createEventLog(self, simplifiedlog, spectime, trace_attributes,life_cycle,all_life_cycle,bk_type, sensitive_attributes, time_accuracy):
+    def createEventLog(self, simplifiedlog, generalising, spectime, trace_attributes,life_cycle,all_life_cycle,bk_type, sensitive_attributes, time_accuracy):
         time_prefix = ['time:timestamp']
         life_cycle_prefix = ['lifecycle:transition']
         deleteLog = []
@@ -373,9 +373,10 @@ class ELReps():
         d_l = 0
         for i in range(0, len(log)):
             caseId = log[i].attributes["concept:name"]
-            if caseId not in simplifiedlog.keys():
-                deleteLog.append(i)
-                continue
+            if not generalising:
+                if caseId not in simplifiedlog.keys():
+                    deleteLog.append(i)
+                    continue
             trace = simplifiedlog[caseId]["trace"]
             k = 0
             j = 0
@@ -386,7 +387,14 @@ class ELReps():
             time_exception_happend = 0
             while j < len(log[i]): #and k < len(trace):
                 if (bk_type !='multiset' and simple_trace[j] in trace) or \
-                        (bk_type =='multiset' and simple_trace[j] in [el[0] for el in trace]):
+                        (bk_type =='multiset' and simple_trace[j] in [el[0] for el in trace]) or \
+                        generalising :
+                    # Generalisation added here -----------
+                    if not ((simple_trace[j] in trace) and generalising) or ((simple_trace[j] in [el[0] for el in trace]) and generalising):
+                        #TODO: In the long run, there should be a file that contains a list of attributes and their replacement
+                        generalize = Generalizer.Generalizer(log)
+                        log[i][j]['concept:name'] = generalize.generalize_attribute(simple_trace[j])
+                    # Generalisation ends here -----------
                     if spectime == "seconds":
                         if starttime == 0:
                             starttime = log[i][j]['time:timestamp']
@@ -570,7 +578,8 @@ class ELReps():
                     j += 1
                     k += 1
             for x in del_list:
-                log[i]._list.remove(x)
+                if not generalising:
+                    log[i]._list.remove(x)
                 # d += 1
                 # x += 1
             if len(log[i]) == 0:

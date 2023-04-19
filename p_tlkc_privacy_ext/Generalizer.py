@@ -5,63 +5,68 @@ class Generalizer():
     def __init__(self, log):
         self.log = log
 
-    def generalize_traces(self, logsimple, suppression_set):
-        max_removed = 0
-        #here
+    #TODO: test if this works with more layers in the tree
+    def generalize_attribute(self, trace_attribute):
+        extracted_attribute = trace_attribute[0]
+
         with open("generalization_config.json", "r") as f:
             config = json.load(f)
 
+        def search_for_attribute(attribute, subtree):
+            """
+            Recursive helper function to search for an attribute in a subtree of the configuration file.
+            """
+            if attribute in subtree:
+                return True, subtree
+            else:
+                for parent, child in subtree.items():
+                    found, subsubtree = search_for_attribute(attribute, child)
+                    if found:
+                        return True, subsubtree
+
+            return False, {}
+
+        #TODO: replace org:group with a generic term
+        found, subtree = search_for_attribute(extracted_attribute, config["org:group"])
+
+        if found:
+            if extracted_attribute in subtree:
+                #TODO: replace org:group with a generic term
+                for parent, child in config["org:group"].items():
+                    if subtree == child:
+                        new_attribute = parent
+                        break
+            else:
+                for parent, child in subtree.items():
+                    if extracted_attribute in child:
+                        new_attribute = parent
+                        break
+        else:
+            new_attribute = None
+
+        return new_attribute
+
+    def generalize_traces(self, logsimple, suppression_set):
+        max_removed = 0
 
         for key in logsimple.keys():
-            count_removed = 0
             list_trace = logsimple[key]['trace']
-            generalized_traces = generalize(list_trace, config, suppression_set)
-            # for i, (event, count) in enumerate(list_trace):
-            #     if (event, count) in suppression_set:
-            #         event_path = event.split(":")
-                    # sub_config = config[event_path[0]]
-                    # for node in event_path[1:]:
-                    #     if node not in sub_config:
-                    #         break
-                    #     sub_config = sub_config[node]
-                    # generalized_event = ":".join(list(sub_config.keys())[0].split(":")[:-1])
-                    # list_trace[i] = (generalized_event, count)
+            generalized_traces = self.generalize(list_trace, suppression_set)
             logsimple[key]['trace'] = generalized_traces
         return logsimple, max_removed
+    
+    def generalize(self, list_trace, violating_list):
+        for i, trace in enumerate(list_trace):
+            for violating_event in violating_list:
+                if violating_event == trace:
+                    generalized_event = self.generalize_attribute(violating_event)
+                    updated_trace = self.update_trace(trace, violating_event, generalized_event)
+                    list_trace[i] = updated_trace
+        return list_trace
 
-def generalize_event(event, config):
-    event_type = None
-    if ":" in event[0]:
-        event_path = event[0].split(":")
-        try:
-            sub_config = config[event_path[0]]
-        except KeyError:
-            raise ValueError(f"Key {event_path[0]} not found in config.")
-        for path in event_path[1:]:
-            try:
-                sub_config = sub_config[path]
-            except KeyError:
-                raise ValueError(f"Key {path} not found in config.")
-        event_type = list(sub_config.keys())[0]
-    else:
-        event_type = list(config.keys())[0]
-    return (event_type, event[1])
-
-
-def update_trace(trace, old_event, new_event):
-    updated_trace = []
-    if trace == old_event:
-        updated_trace.append(new_event)
-    else:
-        updated_trace.append(trace)
-    return updated_trace
-
-
-def generalize(list_trace, config, violating_list):
-    for i, trace in enumerate(list_trace):
-        for violating_event in violating_list:
-            if violating_event == trace:
-                generalized_event = generalize_event(violating_event, config)
-                updated_trace = update_trace(trace, violating_event, generalized_event)
-                list_trace[i] = updated_trace
-    return list_trace
+    def update_trace(self, trace, old_event, new_event):
+        tuple_from_event = (new_event, 0)
+        if trace == old_event:
+            return tuple_from_event
+        else:
+            return trace

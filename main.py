@@ -23,7 +23,6 @@ if __name__ == '__main__':
     sensitive_att = ['Diagnose']  # categorical sensitive attributes
     T = ["minutes"]  # original, seconds, minutes, hours, days
     generalising = True # True to use a generalization approach, False for suppression
-    method = "generalized" # generalized or suppressed
     cont = []  # numerical sensitive attributes
     bk_type = "set"  # set, multiset, sequence, relative
     event_attributes = ['concept:name']  # to simplify the event log
@@ -41,7 +40,10 @@ if __name__ == '__main__':
     print(privacy_aware_log_dir)
 
     # subtract the logs
-
+    if generalising:
+        method = "generalized"
+    else:
+        method = "suppressed"
     df1 = pd.read_csv("./xes_results/Sepsis-Cases-Case-attributes.csv")
     df2 = pd.read_csv("./xes_results/Sepsis-Cases-Case-attributes_minutes_2_20_0.5_" + bk_type + "_" + method + ".csv")
     
@@ -52,4 +54,4 @@ if __name__ == '__main__':
 
     df = pd.concat([df1, df2]).drop_duplicates(subset=df1.columns.difference(['time:timestamp']).tolist(), keep=False)
 
-    df.to_csv('./xes_results/removed_rows_' + bk_type + '.csv', index=False)
+    df.to_csv('./xes_results/removed_rows_' + bk_type + '_' + method +'.csv', index=False)
