@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     L = [2]
     K = [20]
-    C = [0.5]
+    C = [0.6]
     alpha = 0.5  # privacy coefficent
     beta = 0.5  # utility coefficent
     event_in_log = 0.5
@@ -39,19 +39,21 @@ if __name__ == '__main__':
                                    alpha, beta, pa_log_dir, pa_log_name, False, utility_measure=utility_measure, multiprocess=multiprocess, mp_technique=mp_technique)
     print(privacy_aware_log_dir)
 
+    #event_log_gen = "Sepsis-Cases-Case-attributes_minutes_2_20_0.6_set_generalized.xes"
+    #pa_log_name_gen = event_log[:-4]
+    #pp_gen = privacyPreserving(event_log_gen)
+    #privacy_aware_log_dir, max_removed = pp_gen.apply(T, L, K, C, sensitive_att, cont, generalising, bk_type, event_attributes, life_cycle, all_life_cycle,
+    #                               alpha, beta, pa_log_dir, pa_log_name_gen, False, utility_measure=utility_measure, multiprocess=multiprocess, mp_technique=mp_technique)
+       
     # subtract the logs
     if generalising:
         method = "generalized"
     else:
         method = "suppressed"
-    df1 = pd.read_csv("./xes_results/Sepsis-Cases-Case-attributes.csv")
-    df2 = pd.read_csv("./xes_results/Sepsis-Cases-Case-attributes_minutes_2_20_0.5_" + bk_type + "_" + method + ".csv")
-    
-    key_cols = ["InfectionSuspected","org:group","SIRSCritTachypnea","Hypotensie","SIRSCritHeartRate","Infusion","DiagnosticArtAstrup","concept:name","DiagnosticIC","DiagnosticSputum","DiagnosticLiquor","DiagnosticOther","SIRSCriteria2OrMore","DiagnosticXthorax","SIRSCritTemperature","DiagnosticUrinaryCulture","SIRSCritLeucos","Oligurie","DiagnosticLacticAcid","lifecycle:transition","Hypoxie","DiagnosticUrinarySediment","DiagnosticECG","case:concept:name","case:DiagnosticBlood","case:DisfuncOrg","case:Age","case:Diagnose","Leucocytes","CRP","LacticAcid"] 
-    # leaves out "time:timestamp"
-
-    df1 = df1[~df1.duplicated(subset=df1.columns.difference(['time:timestamp']).tolist())]
-
-    df = pd.concat([df1, df2]).drop_duplicates(subset=df1.columns.difference(['time:timestamp']).tolist(), keep=False)
-
-    df.to_csv('./xes_results/removed_rows_' + bk_type + '_' + method +'.csv', index=False)
+        df1 = pd.read_csv("./xes_results/Sepsis-Cases-Case-attributes.csv")
+        df2 = pd.read_csv("./xes_results/Sepsis-Cases-Case-attributes_minutes_2_20_0.5_" + bk_type + "_" + method + ".csv")   
+        key_cols = ["InfectionSuspected","org:group","SIRSCritTachypnea","Hypotensie","SIRSCritHeartRate","Infusion","DiagnosticArtAstrup","concept:name","DiagnosticIC","DiagnosticSputum","DiagnosticLiquor","DiagnosticOther","SIRSCriteria2OrMore","DiagnosticXthorax","SIRSCritTemperature","DiagnosticUrinaryCulture","SIRSCritLeucos","Oligurie","DiagnosticLacticAcid","lifecycle:transition","Hypoxie","DiagnosticUrinarySediment","DiagnosticECG","case:concept:name","case:DiagnosticBlood","case:DisfuncOrg","case:Age","case:Diagnose","Leucocytes","CRP","LacticAcid"] 
+        # leaves out "time:timestamp"
+        df1 = df1[~df1.duplicated(subset=df1.columns.difference(['time:timestamp']).tolist())]
+        df = pd.concat([df1, df2]).drop_duplicates(subset=df1.columns.difference(['time:timestamp']).tolist(), keep=False)
+        df.to_csv('./xes_results/removed_rows_' + bk_type + '_' + method +'.csv', index=False)

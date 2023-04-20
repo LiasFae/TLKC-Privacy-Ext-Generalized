@@ -390,10 +390,10 @@ class ELReps():
                         (bk_type =='multiset' and simple_trace[j] in [el[0] for el in trace]) or \
                         generalising :
                     # Generalisation added here -----------
-                    if not ((simple_trace[j] in trace) and generalising) or ((simple_trace[j] in [el[0] for el in trace]) and generalising):
+                    if (bk_type !='multiset' and not simple_trace[j] in trace and generalising) or (bk_type =='multiset' and not simple_trace[j] in [el[0] for el in trace] and generalising):
                         #TODO: In the long run, there should be a file that contains a list of attributes and their replacement
                         generalize = Generalizer.Generalizer(log)
-                        log[i][j]['concept:name'] = generalize.generalize_attribute(simple_trace[j])
+                        log[i][j]['concept:name'] = generalize.generalize_attribute(simple_trace[j], bk_type)
                     # Generalisation ends here -----------
                     if spectime == "seconds":
                         if starttime == 0:
