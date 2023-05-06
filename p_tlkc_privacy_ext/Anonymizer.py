@@ -15,12 +15,17 @@ class Anonymizer:
         relative_freq = repres.get_relative_freq(traces,utility_measure)
         mvs = MVS.MVS(traces, logsimple, sensitive_att, cont, sensitives, bk_type, dict_safe=dict1)
         violating, dict1 = mvs.mvs(l, k, c, multiprocess, mp_technique)
+        #print(violating)
         violating_length = len(violating.copy())
         suppression_set = repres.suppression_new(violating, relative_freq, alpha, beta)
+        print(suppression_set)
         if generalising:
             # Generalizer
+            # here, siblings need to be identified and added to the suppression_set
             generalize = Generalizer.Generalizer(log)
-            traces_removed, max_removed = generalize.generalize_traces(logsimple.copy(), suppression_set)
+            suppression_set_with_siblings = generalize.add_siblings(suppression_set)
+            #print(suppression_set_with_siblings)
+            traces_removed, max_removed = generalize.generalize_traces(logsimple.copy(), suppression_set_with_siblings)
         else:
             # Suppressor
             traces_removed, max_removed = repres.suppress_traces(logsimple.copy(), suppression_set)

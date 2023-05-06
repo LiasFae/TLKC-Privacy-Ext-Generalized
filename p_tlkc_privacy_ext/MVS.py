@@ -56,12 +56,20 @@ class MVS():
         if i == 0:
             flat_list = [item for sublist in self.T for item in sublist]
             X1 = list(set(flat_list))
-
             if self.bk_type == 'multiset':
                 not_valid_multiset = []
+                # --- improvement ---
+                events_counter = self.aggregate_events(self.logsimple)
+                violating_raw_events = self.add_violating_raw_events(events_counter, K)
+                # --- improvement end ---
                 for el in X1:
                     if el[1] > L:
-                        not_valid_multiset.append(el)
+                        # --- improvement ---
+                        if el[0] in violating_raw_events:
+                            continue
+                        else:
+                        # --- improvement end ---
+                            not_valid_multiset.append(el)
                 for x in not_valid_multiset:
                     X1.remove(x)
 
@@ -163,6 +171,24 @@ class MVS():
         violatingConj = [item for sublist in violating for item in sublist]
         return violatingConj, self.dict_safe
 
+    def aggregate_events(self, logsimple):
+        events = {}
+        for _, trace in logsimple.items():
+            tuples = trace['trace']
+            for event, count in tuples:
+                if event in events:
+                    events[event] += count
+                else:
+                    events[event] = count
+        return events
+    
+    def add_violating_raw_events(self, events_counter, K):
+        raw_violating_events = []
+        for event, count in events_counter.items():
+            if count < K:
+                raw_violating_events.append(event)
+        return raw_violating_events
+    
     def chunk(self, data, parts):
         divided = [None] * parts
         n = len(data) // parts
