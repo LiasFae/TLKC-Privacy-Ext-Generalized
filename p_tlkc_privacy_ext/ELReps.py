@@ -364,7 +364,7 @@ class ELReps():
 
         return trace, sens
 
-    def createEventLog(self, simplifiedlog, generalising, spectime, trace_attributes,life_cycle,all_life_cycle,bk_type, sensitive_attributes, time_accuracy):
+    def createEventLog(self, simplifiedlog, generalising, replacement_list, spectime, trace_attributes,life_cycle,all_life_cycle,bk_type, sensitive_attributes, time_accuracy):
         time_prefix = ['time:timestamp']
         life_cycle_prefix = ['lifecycle:transition']
         deleteLog = []
@@ -389,12 +389,21 @@ class ELReps():
                 if (bk_type !='multiset' and simple_trace[j] in trace) or \
                         (bk_type =='multiset' and simple_trace[j] in [el[0] for el in trace]) or \
                         generalising :
-                    # Generalisation added here -----------
+                    # --- Generalizer Add-On --
                     if (bk_type !='multiset' and not simple_trace[j] in trace and generalising) or (bk_type =='multiset' and not simple_trace[j] in [el[0] for el in trace] and generalising):
-                        #TODO: In the long run, there should be a file that contains a list of attributes and their replacement
-                        generalize = Generalizer.Generalizer(log)
-                        log[i][j]['concept:name'] = generalize.generalize_attribute(simple_trace[j], bk_type)
-                    # Generalisation ends here -----------
+                        replacement_el = None
+                        for el in replacement_list:
+                            if (bk_type == 'multiset'):
+                                if el[0] == simple_trace[j]:
+                                    replacement_el = el[1]
+                                    break
+                            else:
+                                if el[0] == simple_trace[j][0]:
+                                    replacement_el = el[1]
+                                    break                                 
+                        if replacement_el is not None:
+                            log[i][j]['concept:name'] = replacement_el
+                    # --- Generalizer Add-On End --
                     if spectime == "seconds":
                         if starttime == 0:
                             starttime = log[i][j]['time:timestamp']

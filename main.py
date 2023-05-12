@@ -12,10 +12,7 @@ if __name__ == '__main__':
     csv_file_path = os.path.join('./xes_results', 'Sepsis-Cases-Case-attributes.csv')
     csv_log.to_csv(csv_file_path, index=False, sep=',', encoding='utf-8')
 
-    #TODO: für Multiset muss eine Prüfung stattfinden, ob das Event < k ist, auch ohne die Occurence, da sonst
-    # durch die Prüfung gegen L Events durchrutschen können, die kleiner k sind
-
-    L = [2] #strength of background knowledge, for multiset adversary only knows 
+    L = [2]
     K = [20]
     C = [0.5]
     alpha = 0.5  # privacy coefficent
@@ -25,10 +22,8 @@ if __name__ == '__main__':
     utility_measure = [event_in_log,event_in_variant]
     sensitive_att = ['Diagnose']  # categorical sensitive attributes
     T = ["minutes"]  # original, seconds, minutes, hours, days
-    generalising = True # True to use a generalization approach, False for suppression
-    generalising_iterations = 2
     cont = []  # numerical sensitive attributes
-    bk_type = "multiset"  # set, multiset, sequence, relative
+    bk_type = "sequence"  # set, multiset, sequence, relative
     event_attributes = ['concept:name']  # to simplify the event log
     life_cycle = ['complete', '', 'COMPLETE']  # these life cycles are applied only when all_lif_cycle = False
     all_life_cycle = True  # when life cycle is in trace attributes then all_life_cycle has to be True
@@ -36,12 +31,18 @@ if __name__ == '__main__':
     pa_log_name = event_log[:-4]
     multiprocess = True  # if you want to you use multiprocessing
     mp_technique = 'pool'
+    # --- Generalizer Add-On ---
+    generalising = True # True to use a generalization approach, False for suppression
+    generalising_iterations = 2
+    generalization_type = "sibling" # sibling, 
+    #TODO: Add a check when the sibling generalization reaches the top node this should never be generalized further
+    # Generalizer Add-On End ---
     if not os.path.exists(pa_log_dir):
         os.makedirs(pa_log_dir)
     pp = privacyPreserving(event_log)
     privacy_aware_log_dir, max_removed = pp.apply(T, L, K, C, sensitive_att, cont, generalising, bk_type, event_attributes, life_cycle, all_life_cycle,
                                    alpha, beta, pa_log_dir, pa_log_name, False, utility_measure=utility_measure, multiprocess=multiprocess, mp_technique=mp_technique)
-    
+    # --- Generalizer Add-On ---
     if generalising:
         for i in range(generalising_iterations):
             event_log_gen = "xes_results/Sepsis-Cases-Case-attributes_" + str(T[0]) + "_" + str(L[0]) + "_" + str(K[0]) + "_" + str(C[0]) + "_" + bk_type + "_generalized.xes"
@@ -49,8 +50,8 @@ if __name__ == '__main__':
             pp_gen = privacyPreserving(event_log_gen)
             privacy_aware_log_dir, max_removed = pp_gen.apply(T, L, K, C, sensitive_att, cont, generalising, bk_type, event_attributes, life_cycle, all_life_cycle,
                                         alpha, beta, pa_log_dir, pa_log_name_gen, False, utility_measure=utility_measure, multiprocess=multiprocess, mp_technique=mp_technique)
-            
-    # subtract the logs
+    # --- Generalizer Add-On End ---        
+    # subtract the logs (to be deleted)
     if generalising:
         method = "generalized"
     else:

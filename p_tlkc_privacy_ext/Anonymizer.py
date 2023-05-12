@@ -15,27 +15,31 @@ class Anonymizer:
         relative_freq = repres.get_relative_freq(traces,utility_measure)
         mvs = MVS.MVS(traces, logsimple, sensitive_att, cont, sensitives, bk_type, dict_safe=dict1)
         violating, dict1 = mvs.mvs(l, k, c, multiprocess, mp_technique)
-        #print(violating)
         violating_length = len(violating.copy())
         suppression_set = repres.suppression_new(violating, relative_freq, alpha, beta)
-        print(suppression_set)
+        # --- Generalizer Add-On ---
         if generalising:
-            # Generalizer
-            # here, siblings need to be identified and added to the suppression_set
+            print("raw")
+            print(suppression_set)
             generalize = Generalizer.Generalizer(log)
-            suppression_set_with_siblings = generalize.add_siblings(suppression_set)
-            #print(suppression_set_with_siblings)
-            traces_removed, max_removed = generalize.generalize_traces(logsimple.copy(), suppression_set_with_siblings)
+            # --- Generalization Type: Siblings ---
+            suppression_set_with_siblings, sibling_subtrees = generalize.add_siblings(suppression_set)
+            traces_removed, max_removed, replacement_list = generalize.generalize_traces(logsimple.copy(), suppression_set_with_siblings, sibling_subtrees)
+            print(replacement_list)
+            print("with sibs")
+            print(suppression_set_with_siblings)
         else:
-            # Suppressor
+            # Classic Suppression
+            replacement_list = []
             traces_removed, max_removed = repres.suppress_traces(logsimple.copy(), suppression_set)
+        # --- Generalizer Add-On End ---
         log_count = {t: None for t in spectime}
         d_count = {t: None for t in spectime}
         d_l_count = {t: None for t in spectime}
         for t in spectime:
             traces_removed_copy = traces_removed.copy()
             repres = ELReps.ELReps(log2[t])
-            log_count[t], d_count[t], d_l_count[t] = repres.createEventLog(traces_removed_copy, generalising, t, trace_attributes,
+            log_count[t], d_count[t], d_l_count[t] = repres.createEventLog(traces_removed_copy, generalising, replacement_list, t, trace_attributes,
                                                                            life_cycle,
                                                                            all_life_cycle, bk_type, sensitive_att,
                                                                            time_accuracy='seconds')

@@ -5,11 +5,8 @@ class Generalizer():
     def __init__(self, log):
         self.log = log
 
-    def generalize_attribute(self, trace_attribute, bk_type):
-        if bk_type !='multiset':
-            extracted_attribute = trace_attribute[0]
-        else:
-            extracted_attribute = trace_attribute
+    def generalize_attribute(self, trace_attribute):
+        extracted_attribute = trace_attribute[0]
 
         new_attribute = ""
 
@@ -35,23 +32,48 @@ class Generalizer():
         found, subtree, new_attribute = search_for_attribute(extracted_attribute, config, "")
         return new_attribute
 
-    def generalize_traces(self, logsimple, suppression_set):
+    def generalize_traces(self, logsimple, generalization_set, sibling_subtrees):
+        replacement_list = []
         max_removed = 0
-
-        for key in logsimple.keys():
-            list_trace = logsimple[key]['trace']
-            generalized_traces = self.generalize(list_trace, suppression_set)
-            logsimple[key]['trace'] = generalized_traces
-        return logsimple, max_removed
+        count = 0
+        count2 = 0
+        # count < 20 is a safety measure
+        while sibling_subtrees and count < 20:
+            generalization_set, sibling_subtrees = self.find_lowest_elements_from_subtrees(sibling_subtrees, generalization_set, logsimple)
+            count += 1
+        found = True
+        while found and count2 <20:
+            count2 += 1
+            found = False
+            for key in logsimple.keys():
+                list_trace = logsimple[key]['trace']
+                generalized_traces, replacement_list = self.generalize(list_trace, generalization_set, replacement_list)
+                logsimple[key]['trace'] = generalized_traces
+            for violating_event in generalization_set:
+                for key in logsimple.keys():
+                    list_trace2 = logsimple[key]['trace']
+                    if violating_event in list_trace2:
+                        found = True
+                        break
+                if found:
+                    break    
+        return logsimple, max_removed, replacement_list
     
-    def generalize(self, list_trace, violating_list):
+    def generalize(self, list_trace, violating_list, replacement_list):
         for i, trace in enumerate(list_trace):
             for violating_event in violating_list:
                 if violating_event == trace:
-                    generalized_event = self.generalize_attribute(violating_event, bk_type="irrelevant")
+                    generalized_event = self.generalize_attribute(violating_event)
                     updated_trace = self.update_trace(trace, violating_event, generalized_event)
+                    if ((violating_event[0], updated_trace[0]) not in replacement_list):
+                        index = next((i for i, tpl in enumerate(replacement_list) if tpl[1] == violating_event[0]), None)
+                        if index is not None:
+                            tpl = replacement_list[index]
+                            replacement_list[index] = (tpl[0], updated_trace[0])
+                        else:
+                            replacement_list.append((violating_event[0], updated_trace[0]))
                     list_trace[i] = updated_trace  
-        return list_trace
+        return list_trace, replacement_list
 
     def update_trace(self, trace, old_event, new_event):
         tuple_from_event = (new_event, old_event[1])
@@ -62,6 +84,8 @@ class Generalizer():
         
     def add_siblings(self, suppression_set):
         updated_suppression_set = suppression_set
+        sibling_subtrees = []
+
 
         with open("generalization_config.json", "r") as f:
             config = json.load(f)
@@ -69,9 +93,6 @@ class Generalizer():
         for violating_event in suppression_set:
             #find siblings and if they are not in violating_list already, also generalize them
             def find_sibling_node(attribute, subtree):
-                """
-                Recursive helper function to search for an attribute in a subtree of the configuration file.
-                """
                 if attribute in subtree:
                     return True, subtree
                 else:
@@ -92,7 +113,41 @@ class Generalizer():
                     elif key in [vl[0] for vl in suppression_set]: #skip key if already in suppression set
                         continue
                     else:
+                        if subtree[key]:
+                            sibling_subtrees.append((subtree[key], violating_event[1]))
+                            #sibling_subtrees.append(({'Leucocytes': {}}, violating_event[1]))
                         tuple_from_key = (key, violating_event[1])
                         updated_suppression_set.append(tuple_from_key)
 
-        return updated_suppression_set
+        return updated_suppression_set, sibling_subtrees
+    
+    def find_lowest_elements_from_subtrees(self, sibling_subtrees, generalization_set, logsimple):
+        for subtree_dict, occurence in sibling_subtrees:
+            def get_lowest_elements(subtree):
+                lowest_elements = []
+                keys_to_delete = []
+                for key, value in subtree.items():
+                    if not value:  # this means that the current key is a "leaf" node
+                        lowest_elements.append((key, occurence))
+                        keys_to_delete.append(key)
+                    else:
+                        lowest_elements += get_lowest_elements(value)  # recursively call the function on the nested list/dictionary
+                for key in keys_to_delete:
+                    del subtree[key]
+                return lowest_elements
+
+            lowest_elements = get_lowest_elements(subtree_dict)
+            for el in lowest_elements:
+                if el not in generalization_set:
+                    generalization_set.append(el)
+        sibling_subtrees = self.remove_empty_subtrees(sibling_subtrees)
+        return generalization_set, sibling_subtrees
+
+    def remove_empty_subtrees(self, sibling_subtrees):
+        subtrees_to_remove = []
+        for i, subtree in enumerate(sibling_subtrees):
+            if len(subtree[0]) == 0:
+                subtrees_to_remove.append(i)
+        for index in sorted(subtrees_to_remove, reverse=True):
+            del sibling_subtrees[index]
+        return sibling_subtrees
