@@ -1,3 +1,4 @@
+import json
 import operator
 import datetime
 import csv
@@ -95,7 +96,15 @@ class ELReps():
         # 9: end
         return sup
 
-    def suppression_new(self, violating, relative_freq, alpha, beta):
+    def suppression_new(self, violating, relative_freq, alpha, beta, generalising, gen_config):
+        # --- Generalizer Add-On ---
+        if generalising:
+            with open(gen_config, "r") as f:
+                config = json.load(f)
+            top_node = next(iter(config.keys()))
+        else:
+            top_node = ''
+        # --- Generalizer Add-On End ---  
         sup = []
         X1 = []
         for v in violating:
@@ -106,8 +115,12 @@ class ELReps():
                     X1.append(sub)
         X1 = list(set(X1))
         # score_res, mvsEl, mfsEl = self.score(violating, frequent, X1)
-        score_res, mvsEl = self.new_score2(violating, X1, relative_freq, alpha, beta)
-
+        # --- Generalizer Add-On ---
+        if generalising:
+            score_res, mvsEl = self.new_score2(violating, X1, relative_freq, alpha, beta, top_node)
+        else:
+        # --- Generalizer Add-On End ---  
+            score_res, mvsEl = self.new_score2(violating, X1, relative_freq, alpha, beta, '')
         # while PG table is not empty do
         while len(violating) > 0:
             # 4: select a pair w that has the highest Score to suppress;
@@ -133,9 +146,19 @@ class ELReps():
             if len(violating) > 0:
                 # 7: remove w from PG Table;
                 # score_res, mvsEl, mfsEl = self.score(violating, frequent, X1)
-                score_res, mvsEl = self.new_score2(violating, X1, relative_freq, alpha, beta)
+                # --- Generalizer Add-On ---
+                if generalising:
+                    score_res, mvsEl = self.new_score2(violating, X1, relative_freq, alpha, beta, top_node)
+                else:
+                # --- Generalizer Add-On End --- 
+                    score_res, mvsEl = self.new_score2(violating, X1, relative_freq, alpha, beta, '')
             # 8: add w to Sup;
-            sup.append(w)
+            # --- Generalizer Add-On --- 
+            if w[0] == top_node:
+                continue
+            else:
+            # --- Generalizer Add-On End ---         
+                sup.append(w)
         # 9: end
         return sup
 
@@ -238,7 +261,7 @@ class ELReps():
 
         return score, mvsEle, mfsEle
 
-    def new_score2(self,violating, X1, relative_freq,alpha, beta): #utility based on frequencies
+    def new_score2(self,violating, X1, relative_freq,alpha, beta, top_node): #utility based on frequencies
         priv = {v: 0 for v in X1}
         mvsEle = {v: [] for v in X1}
         for v in violating:
@@ -252,15 +275,19 @@ class ELReps():
 
         score = {el: 0 for el in X1}
         for el in X1:
-            privacy = priv[el] / len(violating)
-            utility = 1 - relative_freq[el]
-            if privacy == 0:
-                score_val = 0
+            # --- Generalizer Add-On ---
+            if el[0] == top_node:
+                score_val = 0.0000001
             else:
-                # score_val = 2 * (privacy * utility) / utility + privacy
-                score_val = alpha * privacy + beta * utility
-                # score_val = (alpha * privacy) / (beta * utility)
-
+            # --- Generalizer Add-On End ---
+                privacy = priv[el] / len(violating)
+                utility = 1 - relative_freq[el]
+                if privacy == 0:
+                    score_val = 0
+                else:
+                    # score_val = 2 * (privacy * utility) / utility + privacy
+                    score_val = alpha * privacy + beta * utility
+                    # score_val = (alpha * privacy) / (beta * utility)
             score[el] = score_val
             if score[el] == 0:
                 del score[el]
@@ -401,8 +428,10 @@ class ELReps():
                                 if el[0] == simple_trace[j][0]:
                                     replacement_el = el[1]
                                     break                                 
-                        if replacement_el is not None:
+                        if replacement_el is not None and not(replacement_el == "SUPPRESS_EVENT"):
                             log[i][j]['concept:name'] = replacement_el
+                        elif replacement_el == "SUPPRESS_EVENT":
+                            del_list.append(log[i][j])
                     # --- Generalizer Add-On End --
                     if spectime == "seconds":
                         if starttime == 0:
@@ -587,8 +616,7 @@ class ELReps():
                     j += 1
                     k += 1
             for x in del_list:
-                if not generalising:
-                    log[i]._list.remove(x)
+                log[i]._list.remove(x)
                 # d += 1
                 # x += 1
             if len(log[i]) == 0:

@@ -5,12 +5,12 @@ class Generalizer():
     def __init__(self, log):
         self.log = log
 
-    def generalize_attribute(self, trace_attribute):
+    def generalize_attribute(self, trace_attribute, gen_config):
         extracted_attribute = trace_attribute[0]
 
         new_attribute = ""
 
-        with open("generalization_config.json", "r") as f:
+        with open(gen_config, "r") as f:
             config = json.load(f)
 
         def search_for_attribute(attribute, subtree, parent):
@@ -32,7 +32,7 @@ class Generalizer():
         found, subtree, new_attribute = search_for_attribute(extracted_attribute, config, "")
         return new_attribute
 
-    def generalize_traces(self, logsimple, generalization_set, sibling_subtrees):
+    def generalize_traces_with_siblings(self, logsimple, gen_config, generalization_type, generalization_set, sibling_subtrees):
         replacement_list = []
         max_removed = 0
         count = 0
@@ -47,7 +47,7 @@ class Generalizer():
             found = False
             for key in logsimple.keys():
                 list_trace = logsimple[key]['trace']
-                generalized_traces, replacement_list = self.generalize(list_trace, generalization_set, replacement_list)
+                generalized_traces, replacement_list = self.generalize(list_trace, gen_config, generalization_type, generalization_set, replacement_list)
                 logsimple[key]['trace'] = generalized_traces
             for violating_event in generalization_set:
                 for key in logsimple.keys():
@@ -59,11 +59,27 @@ class Generalizer():
                     break    
         return logsimple, max_removed, replacement_list
     
-    def generalize(self, list_trace, violating_list, replacement_list):
+
+    def generalize_traces_with_suppression(self, logsimple, gen_config, generalization_type, generalization_set):
+        replacement_list = []
+        max_removed = 0
+
+        for key in logsimple.keys():
+            list_trace = logsimple[key]['trace']
+            generalized_traces, replacement_list = self.generalize(list_trace, gen_config, generalization_type, generalization_set, replacement_list)
+            logsimple[key]['trace'] = generalized_traces
+        return logsimple, max_removed, replacement_list
+    
+    def generalize(self, list_trace, gen_config, generalization_type, violating_list, replacement_list):
+        with open(gen_config, "r") as f:
+            config = json.load(f)
+        top_node = next(iter(config.keys()))
         for i, trace in enumerate(list_trace):
             for violating_event in violating_list:
                 if violating_event == trace:
-                    generalized_event = self.generalize_attribute(violating_event)
+                    generalized_event = self.generalize_attribute(violating_event, gen_config)
+                    if generalization_type == "genAndSup" and generalized_event == top_node:
+                        generalized_event = "SUPPRESS_EVENT"
                     updated_trace = self.update_trace(trace, violating_event, generalized_event)
                     if ((violating_event[0], updated_trace[0]) not in replacement_list):
                         index = next((i for i, tpl in enumerate(replacement_list) if tpl[1] == violating_event[0]), None)
@@ -82,12 +98,12 @@ class Generalizer():
         else:
             return trace
         
-    def add_siblings(self, suppression_set):
+    def add_siblings(self, suppression_set, gen_config):
         updated_suppression_set = suppression_set
         sibling_subtrees = []
 
 
-        with open("generalization_config.json", "r") as f:
+        with open(gen_config, "r") as f:
             config = json.load(f)
 
         for violating_event in suppression_set:

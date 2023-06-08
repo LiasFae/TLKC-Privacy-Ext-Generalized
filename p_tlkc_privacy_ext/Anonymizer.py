@@ -7,7 +7,7 @@ class Anonymizer:
         self = self
 
     def none_relative_type(self, log, log2, sensitive_att, cont, l, k, c, dict1, spectime, trace_attributes, life_cycle,
-                           all_life_cycle, generalising, bk_type, alpha, beta, utility_measure, multiprocess, mp_technique):
+                           all_life_cycle, generalising, generalization_type, gen_config, bk_type, alpha, beta, utility_measure, multiprocess, mp_technique):
         repres = ELReps.ELReps(log)
         logsimple, traces, sensitives = repres.create_simple_log(bk_type, trace_attributes, life_cycle,
                                                                  all_life_cycle, sensitive_att,
@@ -15,19 +15,23 @@ class Anonymizer:
         relative_freq = repres.get_relative_freq(traces,utility_measure)
         mvs = MVS.MVS(traces, logsimple, sensitive_att, cont, sensitives, bk_type, dict_safe=dict1)
         violating, dict1 = mvs.mvs(l, k, c, multiprocess, mp_technique)
+        print(violating)
         violating_length = len(violating.copy())
-        suppression_set = repres.suppression_new(violating, relative_freq, alpha, beta)
+        suppression_set = repres.suppression_new(violating, relative_freq, alpha, beta, generalising, gen_config)
         # --- Generalizer Add-On ---
         if generalising:
             print("raw")
             print(suppression_set)
             generalize = Generalizer.Generalizer(log)
-            # --- Generalization Type: Siblings ---
-            suppression_set_with_siblings, sibling_subtrees = generalize.add_siblings(suppression_set)
-            traces_removed, max_removed, replacement_list = generalize.generalize_traces(logsimple.copy(), suppression_set_with_siblings, sibling_subtrees)
-            print(replacement_list)
-            print("with sibs")
-            print(suppression_set_with_siblings)
+            if generalization_type == "sibling":
+                suppression_set_with_siblings, sibling_subtrees = generalize.add_siblings(suppression_set, gen_config)
+                traces_removed, max_removed, replacement_list = generalize.generalize_traces_with_siblings(logsimple.copy(), gen_config, generalization_type, suppression_set_with_siblings, sibling_subtrees)
+            elif generalization_type == "genAndSup":
+                traces_removed, max_removed, replacement_list = generalize.generalize_traces_with_suppression(logsimple.copy(), gen_config, generalization_type, suppression_set)
+            else:
+                print("Generalization type must be one of the pre-defined values. Will continue with suppression instead.")
+                replacement_list = []
+                traces_removed, max_removed = repres.suppress_traces(logsimple.copy(), suppression_set)
         else:
             # Classic Suppression
             replacement_list = []

@@ -20,12 +20,7 @@ class privacyPreserving(object):
         '''
         self.log = xes_importer_factory.apply(log)
 
-    def apply(self, T, L, K, C, sensitive_att, cont, generalising, bk_type, trace_attributes, life_cycle, all_life_cycle, alpha, beta, directory, file_name, external_name, utility_measure=[0.5,0.5], multiprocess=True, mp_technique='pool'):
-
-        # bk_type is set, multiset, sequence or relative
-        # why is t only in the mix for relative?
-        # this is a nested dictionary
-        # what are w, x and v?
+    def apply(self, T, L, K, C, sensitive_att, cont, generalising, generalization_type, gen_config, bk_type, trace_attributes, life_cycle, all_life_cycle, alpha, beta, directory, file_name, external_name, utility_measure=[0.5,0.5], multiprocess=True, mp_technique='pool'):
         if bk_type == 'relative':
             dict1 = {
                 l: {k: {c: {t: {"w": [], "x": [], "v": []} for t in T} for c in C} for k in K}
@@ -43,7 +38,6 @@ class privacyPreserving(object):
             for k in K:
                 for c in C:
                     try:
-                        # functionality for bk_types that are not relative
                         if bk_type == "set" or bk_type == "multiset" or bk_type == "sequence":
                             print("l = " + str(l) + " type = " + str(bk_type) + " is running...")
                             log2 = {t: None for t in T}
@@ -51,8 +45,8 @@ class privacyPreserving(object):
                                 log2[t] = self.log
                             log, violating_length, d, d_l, dict2, max_removed = \
                                 anonymizer.none_relative_type(self.log, log2, sensitive_att, cont, l, k, c, dict1, T,
-                                                              trace_attributes, life_cycle, all_life_cycle, generalising, bk_type,
-                                                              alpha, beta, utility_measure, multiprocess, mp_technique)
+                                                              trace_attributes, life_cycle, all_life_cycle, generalising, 
+                                                              generalization_type, gen_config, bk_type, alpha, beta, utility_measure, multiprocess, mp_technique)
                             dict1 = dict2
                             for t in T:
                                 self.add_privacy_metadata(log[t])
@@ -64,13 +58,20 @@ class privacyPreserving(object):
                                 if external_name:
                                     privacy_aware_log_dir = os.path.join(directory, file_name)
                                 else:
-                                    n_file_path = file_name + "_" + str(t) + "_" + str(l) + "_" + str(k) + "_" + str(
-                                        c) + "_" + bk_type + "_" + method + ".xes"
+                                    if generalising:
+                                        n_file_path = file_name + "_" + str(t) + "_" + str(l) + "_" + str(k) + "_" + str(
+                                            c) + "_" + bk_type + "_generalized_" +  generalization_type + ".xes"
+                                    else:
+                                        n_file_path = file_name + "_" + str(t) + "_" + str(l) + "_" + str(k) + "_" + str(
+                                            c) + "_" + bk_type + "_suppressed.xes"                                        
                                     privacy_aware_log_dir = os.path.join(directory, n_file_path)
                                 xes_exporter.export_log(log[t], privacy_aware_log_dir)
 
-
-                                n_file_path_csv = file_name + "_" + str(t) + "_" + str(l) + "_" + str(k) + "_" + str(c) + "_" + bk_type + "_" + method + ".csv"
+                                if generalising:
+                                    n_file_path_csv = file_name + "_" + str(t) + "_" + str(l) + "_" + str(k) + "_" + str(c) + "_" + bk_type + "_generalized_" +  generalization_type + ".csv"
+                                else:
+                                    n_file_path_csv = file_name + "_" + str(t) + "_" + str(l) + "_" + str(k) + "_" + str(c) + "_" + bk_type + "_suppressed.csv"
+ 
 
                                 fileConverter = FileConverter.FileConverter()
                                 fileConverter.convert_to_csv(log[t], n_file_path_csv, directory)
