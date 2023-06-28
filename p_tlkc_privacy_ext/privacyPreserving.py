@@ -8,7 +8,6 @@ from p_tlkc_privacy_ext import Anonymizer
 from p_tlkc_privacy_ext import FileConverter
 import os
 
-# this class only calls the anonymizer depending on the input data and especially separates by bk_type (relative, set, multiset and sequence)
 class privacyPreserving(object):
     '''
     Applying privacy preserving technique
@@ -20,7 +19,7 @@ class privacyPreserving(object):
         '''
         self.log = xes_importer_factory.apply(log)
 
-    def apply(self, T, L, K, C, sensitive_att, cont, generalising, generalization_type, gen_config, bk_type, trace_attributes, life_cycle, all_life_cycle, alpha, beta, directory, file_name, external_name, utility_measure=[0.5,0.5], multiprocess=True, mp_technique='pool'):
+    def apply(self, T, L, K, C, sensitive_att, cont, generalising, generalization_type, generalising_max_iterations, gen_config, bk_type, trace_attributes, life_cycle, all_life_cycle, alpha, beta, directory, file_name, external_name, utility_measure=[0.5,0.5], multiprocess=True, mp_technique='pool'):
         if bk_type == 'relative':
             dict1 = {
                 l: {k: {c: {t: {"w": [], "x": [], "v": []} for t in T} for c in C} for k in K}
@@ -44,9 +43,10 @@ class privacyPreserving(object):
                             for t in T:
                                 log2[t] = self.log
                             log, violating_length, d, d_l, dict2, max_removed = \
-                                anonymizer.none_relative_type(self.log, log2, sensitive_att, cont, l, k, c, dict1, T,
+                                anonymizer.none_relative_type(self.log, log2, sensitive_att, cont, l, L, k, K, c, C, dict1, T,
                                                               trace_attributes, life_cycle, all_life_cycle, generalising, 
-                                                              generalization_type, gen_config, bk_type, alpha, beta, utility_measure, multiprocess, mp_technique)
+                                                              generalization_type, generalising_max_iterations, gen_config, bk_type, alpha, beta,
+                                                              utility_measure, multiprocess, mp_technique)
                             dict1 = dict2
                             for t in T:
                                 self.add_privacy_metadata(log[t])

@@ -2,8 +2,8 @@ import json
 
 class Generalizer():
 
-    def __init__(self, log):
-        self.log = log
+    def __init__(self):
+        self=self
 
     def generalize_attribute(self, trace_attribute, gen_config):
         extracted_attribute = trace_attribute[0]

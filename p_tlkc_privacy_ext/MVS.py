@@ -160,6 +160,7 @@ class MVS():
 
         # 19: end while
         # 20: return V (T) = V1 ' · · · ' Vi−1;
+        
         if t is None:
             self.dict_safe[i - 1][K][C]["w"] = w.copy()
             self.dict_safe[i - 1][K][C]["x"] = X1.copy()
@@ -168,10 +169,8 @@ class MVS():
             self.dict_safe[i - 1][K][C][t]["w"] = w.copy()
             self.dict_safe[i - 1][K][C][t]["x"] = X1.copy()
             self.dict_safe[i - 1][K][C][t]["v"] = violating.copy()
-
         violatingConj = [item for sublist in violating for item in sublist]
         return violatingConj, self.dict_safe
-
     def aggregate_events(self, logsimple):
         events = {}
         for _, trace in logsimple.items():
