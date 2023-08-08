@@ -30,13 +30,9 @@ class Anonymizer:
             relative_freq = repres.get_relative_freq(traces,utility_measure)
             mvs = MVS.MVS(traces, logsimple, sensitive_att, cont, sensitives, bk_type, dict_safe=dict1)
             violating, dict1 = mvs.mvs(l, k, c, multiprocess, mp_technique)
-            #print(violating)
             violating_length = len(violating.copy())
             suppression_set = repres.suppression_new(violating, relative_freq, alpha, beta, generalising, gen_config)
-            # --- Generalizer Add-On ---
             if generalising:
-                #print("raw")
-                print(suppression_set)
                 generalize = Generalizer.Generalizer()
                 if generalization_type == "sibling":
                     suppression_set_with_siblings, sibling_subtrees = generalize.add_siblings(suppression_set, gen_config)
@@ -51,7 +47,6 @@ class Anonymizer:
                 # Classic Suppression
                 replacement_list = []
                 traces_removed, max_removed = repres.suppress_traces(logsimple.copy(), suppression_set)
-            # --- Generalizer Add-On End ---
             log_count = {t: None for t in spectime}
             d_count = {t: None for t in spectime}
             d_l_count = {t: None for t in spectime}

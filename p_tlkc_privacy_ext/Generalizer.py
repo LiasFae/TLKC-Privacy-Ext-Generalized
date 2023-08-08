@@ -14,9 +14,7 @@ class Generalizer():
             config = json.load(f)
 
         def search_for_attribute(attribute, subtree, parent):
-            """
-            Recursive helper function to search for an attribute in a subtree of the configuration file.
-            """
+            # Recursive helper function to search for an attribute in a subtree of the configuration file.
             parent_attribute = ""
             if attribute in subtree:
                 parent_attribute = parent

@@ -50,11 +50,6 @@ class privacyPreserving(object):
                             dict1 = dict2
                             for t in T:
                                 self.add_privacy_metadata(log[t])
-                                if generalising:
-                                    method = "generalized"
-                                else:
-                                    method = "suppressed"
-                                # this if-else generates the name of the privacy-preserved event log
                                 if external_name:
                                     privacy_aware_log_dir = os.path.join(directory, file_name)
                                 else:

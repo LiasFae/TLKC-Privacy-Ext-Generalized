@@ -155,7 +155,6 @@ class MVS():
                 # 12: Xi+1 ! Wi ! Wi;
                 X1 = self.w_create(w, i - 1, X1, violating, L, multiprocess, mp_technique, non_violating_events = non_violating_events_len_1)
                 print("X1: " + str(len(X1)))
-                #print(X1)
             # 18: i++;
 
         # 19: end while
