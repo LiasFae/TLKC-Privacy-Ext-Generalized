@@ -11,7 +11,7 @@ if __name__ == '__main__':
     event_in_log = 0.5 # frequency in the whole log
     event_in_variant = 0.5 # frequency in traces
     utility_measure = [event_in_log,event_in_variant]
-    sensitive_att = ['AMOUNT_REQ']  # categorical sensitive attributes
+    sensitive_att = ['Diagnose']  # categorical sensitive attributes
     T = ["minutes"]  # original, seconds, minutes, hours, days
     cont = []  # numerical sensitive attributes
     bk_type = "set"  # set, multiset, sequence, relative
@@ -26,10 +26,11 @@ if __name__ == '__main__':
     generalising = True # True to use generalization, False for suppression
     generalising_max_iterations = 20 # safety measure for aborting generalization
     generalization_type = "sibling" # sibling, genAndSup
-    gen_config = "generalization_config.json" # load your generalization tree here
+    gen_config = "generalization_config_sepsis.json" # load your generalization tree here
     # Generalizer Add-On End ---
     if not os.path.exists(pa_log_dir):
         os.makedirs(pa_log_dir)
     pp = privacyPreserving(event_log)
     privacy_aware_log_dir, max_removed = pp.apply(T, L, K, C, sensitive_att, cont, generalising, generalization_type, generalising_max_iterations, gen_config, bk_type, event_attributes, life_cycle, all_life_cycle,
                                    alpha, beta, pa_log_dir, pa_log_name, False, utility_measure=utility_measure, multiprocess=multiprocess, mp_technique=mp_technique)
+    
