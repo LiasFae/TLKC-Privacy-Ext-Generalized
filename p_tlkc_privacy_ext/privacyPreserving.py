@@ -1,8 +1,5 @@
-from datetime import datetime
 from pm4py.objects.log.importer.xes import factory as xes_importer_factory
 from pm4py.objects.log.exporter.xes import factory as xes_exporter
-import pandas as pd
-from pm4py.objects.conversion.log import factory as conversion_factory
 from p_privacy_metadata.privacyExtension import privacyExtension
 from p_tlkc_privacy_ext import Anonymizer
 from p_tlkc_privacy_ext import FileConverter
