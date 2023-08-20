@@ -10,3 +10,6 @@ pip install p-tlkc-privacy-ext
 ## Usage
 
 Check the main files in the root directory to see the usage.
+
+## Generalization Extension
+The project has been further extended with the option to use generalization instead of suppression, which is not part of the published Python package.
