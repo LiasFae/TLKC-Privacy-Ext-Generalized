@@ -56,12 +56,20 @@ class MVS():
         if i == 0:
             flat_list = [item for sublist in self.T for item in sublist]
             X1 = list(set(flat_list))
-
             if self.bk_type == 'multiset':
                 not_valid_multiset = []
+                # --- improvement ---
+                events_counter = self.aggregate_events(self.logsimple)
+                violating_raw_events = self.add_violating_raw_events(events_counter, K)
+                # --- improvement end ---
                 for el in X1:
                     if el[1] > L:
-                        not_valid_multiset.append(el)
+                        # --- improvement ---
+                        if el[0] in violating_raw_events:
+                            continue
+                        else:
+                        # --- improvement end ---
+                            not_valid_multiset.append(el)
                 for x in not_valid_multiset:
                     X1.remove(x)
 
@@ -151,6 +159,7 @@ class MVS():
 
         # 19: end while
         # 20: return V (T) = V1 ' · · · ' Vi−1;
+        
         if t is None:
             self.dict_safe[i - 1][K][C]["w"] = w.copy()
             self.dict_safe[i - 1][K][C]["x"] = X1.copy()
@@ -159,11 +168,26 @@ class MVS():
             self.dict_safe[i - 1][K][C][t]["w"] = w.copy()
             self.dict_safe[i - 1][K][C][t]["x"] = X1.copy()
             self.dict_safe[i - 1][K][C][t]["v"] = violating.copy()
-
         violatingConj = [item for sublist in violating for item in sublist]
-
         return violatingConj, self.dict_safe
-
+    def aggregate_events(self, logsimple):
+        events = {}
+        for _, trace in logsimple.items():
+            tuples = trace['trace']
+            for event, count in tuples:
+                if event in events:
+                    events[event] += count
+                else:
+                    events[event] = count
+        return events
+    
+    def add_violating_raw_events(self, events_counter, K):
+        raw_violating_events = []
+        for event, count in events_counter.items():
+            if count < K:
+                raw_violating_events.append(event)
+        return raw_violating_events
+    
     def chunk(self, data, parts):
         divided = [None] * parts
         n = len(data) // parts
@@ -317,7 +341,7 @@ class MVS():
 
         return Z1
 
-    def X1_generator_multiset(self, data, i, X1, violating):
+    def X1_generator_multiset(self, data, i, X1, violating, L):
         Z1 = copy.deepcopy(X1)
         while len(data) > 0:
             candidate = data.pop()
@@ -391,12 +415,12 @@ class MVS():
         Z1 = self.X1_generator_set(data, i, X1, violating)
         return Z1
 
-    def foo_multiset(self, q, data, i, X1, violating):
-        Z1 = self.X1_generator_set(data, i, X1, violating)
+    def foo_multiset(self, q, data, i, X1, violating, L):
+        Z1 = self.X1_generator_multiset(data, i, X1, violating, L)
         q.put(Z1)
 
-    def foo_multiset_without_q(self, data, i, X1, violating):
-        Z1 = self.X1_generator_set(data, i, X1, violating)
+    def foo_multiset_without_q(self, data, i, X1, violating, L):
+        Z1 = self.X1_generator_multiset(data, i, X1, violating, L)
         return Z1
 
     def foo_sequence_relative_prob_without_q(self,X1,i,prob,count,newel_trace):
@@ -532,7 +556,7 @@ class MVS():
                     elif self.bk_type == 'set':
                         p = mp.Process(target=self.foo_set, args=(q, data_chunks[worker], i, X1, violating))
                     elif self.bk_type == 'multiset':
-                        p = mp.Process(target=self.foo_multiset, args=(q, data_chunks[worker], i, X1, violating))
+                        p = mp.Process(target=self.foo_multiset, args=(q, data_chunks[worker], i, X1, violating, L))
                     jobs.append(p)
                     p.start()
                     X1_new += q.get()
@@ -561,7 +585,7 @@ class MVS():
                             pool.apply_async(self.foo_set_without_q, args=(data_chunks[worker], i, X1, violating)))
                     elif self.bk_type == 'multiset':
                         workers.append(
-                            pool.apply_async(self.foo_multiset_without_q, args=(data_chunks[worker], i, X1, violating)))
+                            pool.apply_async(self.foo_multiset_without_q, args=(data_chunks[worker], i, X1, violating, L)))
 
                 for work in workers:
                     X1_new += work.get()
@@ -578,7 +602,7 @@ class MVS():
             elif self.bk_type == 'set':
                 X1_new = self.X1_generator_set(w[i], i, X1, violating)
             elif self.bk_type == 'multiset':
-                X1_new = self.X1_generator_multiset(w[i], i, X1, violating)
+                X1_new = self.X1_generator_multiset(w[i], i, X1, violating, L)
 
         return X1_new
 

@@ -1,0 +1,68 @@
+{
+	"Process_Activity": {
+		"A": {
+			"A_ACCORDECL": {
+				"A_DECLORCANC": {
+					"A_CANCELLED": {},
+					"A_DECLINED": {}
+				},
+				"A_ACCORPREACC": {
+					"A_ACCEPTED": {},
+					"A_PREACCEPTED": {}
+				}	
+			},
+			"A_SUBORPARTLYSUB": {
+				"A_SUBMITTED": {},
+				"A_PARTLYSUBMITTED": {}			
+			},
+			"A_DONE": {
+				"A_ACTORAPPR": {
+					"A_ACTIVATED": {},
+					"A_APPROVED": {}
+				},
+				"A_REGORFIN": {
+					"A_FINALIZED": {},
+					"A_REGISTERED": {}
+				}	
+			}
+		},
+		"O": {
+			"O_ACCORNOTACC": {
+				"O_ACCEPTED": {},
+				"O_DECLORCANC": {
+					"O_DECLINED": {},
+					"O_CANCELLED": {}
+				}
+			},
+			"O_CREASELSENT": {
+				"O_CREAORSEL": {
+					"O_CREATED": {},
+					"O_SELECTED": {}					
+				},
+				"O_SENDIN": {
+					"O_SENT": {},
+					"O_SENT_BACK": {}						
+				}			
+			}
+		},
+		"W": {
+			"W_Validation": {
+				"W_LeadsAndFraud": {
+					"W_Afhandelen leads": {},
+					"W_Beoordelen fraude": {}
+				},
+				"W_DataAndDetails": {
+					"W_Wijzigen contractgegevens": {},
+					"W_Nabellen incomplete dossiers": {}
+				}
+			},
+			"W_CompleteOffersAndInquiries": {
+				"W_Completeren aanvraag": {},
+				"W_OffersAndInquiries": {
+					"W_Nabellen offertes": {},
+					"W_Valideren aanvraag": {}						
+				}			
+			}
+		}
+	}
+}
